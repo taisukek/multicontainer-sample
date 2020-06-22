@@ -1,0 +1,20 @@
+sudo: required
+services:
+  - docker
+
+before_install:
+  - docker build -t taisukek/react-test -f ./client/Dockerfile.dev ./client
+
+script:
+  - docker run -e CI=true taisukek/react-test npm test -- --coverage
+
+after_success:
+  - docker build -t taisukek/multi-client ./client
+  - docker build -t taisukek/multi-nginx ./nginx
+  - docker build -t taisukek/multi-server ./server
+  - docker build -t taisukek/multi-worker ./worker
+  - echo "$DOCKER_PASSWORD" | docker login -u "$DOCKER_ID" --password-stdin
+  - docker push taisukek/multi-client
+  - docker push taisukek/multi-nginx
+  - docker push taisukek/multi-server
+  - docker push taisukek/multi-worker
